@@ -12,12 +12,14 @@
         <field name="arch" type="xml">
             <tree string="Properties">
                 <field name="name" string="Name"/>
+                <field name="property_type_id" string="Type"/>
                 <field name="postcode" string="Postcode"/>
+                <field name="tag_ids" widget="many2many_tags"/>
                 <field name="bedrooms" string="Bedrooms"/>
                 <field name="living_area" string="Living Area (sqm)"/>
                 <field name="expected_price" string="Expected Price"/>
                 <field name="selling_price" string="Selling Price"/>
-                <field name="date_availability" string="Available From"/>
+                <field name="date_availability"/>
             </tree>
         </field>
     </record>
@@ -32,11 +34,14 @@
                         <h1>
                             <field name="name"/>
                         </h1>
+                        <field name="tag_ids" widget="many2many_tags"/>
                     </div>
+                    <separator />
                     <group>
                         <group>
+                            <field name="property_type_id"/>
                             <field name="postcode"/>
-                            <field name="date_availability" string="Available From"/>
+                            <field name="date_availability"/>
                         </group>
                         <group>
                             <field name="expected_price"/>
@@ -56,6 +61,15 @@
                                 <field name="garden_orientation"/>
                             </group>
                         </page>
+                        <page string="Offers">
+                            <field name="offer_ids"/>
+                        </page>
+                        <page string="Other info">
+                            <group>
+                                <field name="salesperson"/>
+                                <field name="buyer"/>
+                            </group>
+                        </page>
                     </notebook>
                 </sheet>
             </form>
@@ -68,6 +82,7 @@
         <field name="arch" type="xml">
             <search>
                 <field name="name" string="Name"/>
+                <field name="property_type_id" string="Type"/>
                 <field name="postcode" string="Postcode"/>
                 <field name="expected_price" string="Expected Price"/>
                 <field name="bedrooms" string="Bedrooms"/>
