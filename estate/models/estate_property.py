@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from odoo import api, fields, models
+from odoo import api, exceptions, fields, models
 
 class EstatePropertyModel(models.Model):
     _name = "estate.property"
@@ -28,6 +28,7 @@ class EstatePropertyModel(models.Model):
     )
     active = fields.Boolean(default=True)
     state = fields.Selection(
+        string="Status",
         selection=[
             ('new', 'New'),
             ('offer_received', 'Offer Received'),
@@ -37,7 +38,8 @@ class EstatePropertyModel(models.Model):
         ],
         required=True,
         copy=False,
-        default='new'
+        default='new',
+        readonly=True
     )
     property_type_id = fields.Many2one('estate.property.type')
     buyer = fields.Many2one('res.partner', copy=False)
@@ -71,6 +73,20 @@ class EstatePropertyModel(models.Model):
         else:
             self.garden_area = 0
             self.garden_orientation = ''
+
+    def set_as_canceled(self):
+        for record in self:
+            if record.state == 'sold':
+                raise exceptions.UserError("Sold properties cannot be canceled")
+                record.state = 'canceled'
+        return True
+
+    def set_as_sold(self):
+        for record in self:
+            if record.state == 'canceled':
+                raise exceptions.UserError("Canceled properties cannot be sold")
+                record.state = 'sold'
+        return True    
 
 class EstatePropertyType(models.Model):
     _name = "estate.property.type"

@@ -21,7 +21,9 @@
                 "--limit-time-real",
                 "1000000",
                 "-u",
-                "estate"
+                "estate",
+                "--dev",
+                 "xml"
             ],
             "cwd": "${workspaceFolder}",
             "env": {},
