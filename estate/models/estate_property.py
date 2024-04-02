@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
 
 from odoo import api, exceptions, fields, models
+from odoo.tools.float_utils import float_compare, float_is_zero
 
 class EstatePropertyModel(models.Model):
     _name = "estate.property"
     _description = "Real Estate"
+    _sql_constraints = [
+        ('check_expected_price', 'CHECK(expected_price > 0)', 'The expected price must be strictly positive'),
+        ('check_selling_price', 'CHECK(selling_price >= 0)', 'The selling price must be positive'),
+    ]
     
     name = fields.Char(required=True)
     description = fields.Char()
@@ -74,6 +79,16 @@ class EstatePropertyModel(models.Model):
             self.garden_area = 0
             self.garden_orientation = ''
 
+    @api.constrains('selling_price', 'expected_price')
+    def _check_selling_price(self):
+        for record in self:
+            affordable_price = record.expected_price * 0.9
+            if (
+                not float_is_zero(record.selling_price, precision_rounding=0.01)
+                and float_compare(affordable_price, record.selling_price, precision_rounding=0.01) > 0
+            ):
+                raise exceptions.ValidationError("The selling price must be 90% of expected price at least")
+
     def set_as_canceled(self):
         for record in self:
             if record.state == 'sold':
@@ -86,50 +101,4 @@ class EstatePropertyModel(models.Model):
             if record.state == 'canceled':
                 raise exceptions.UserError("Canceled properties cannot be sold")
                 record.state = 'sold'
-        return True    
-
-class EstatePropertyType(models.Model):
-    _name = "estate.property.type"
-    _description = "Real Estate Property Type"
-
-    name = fields.Char(required=True)
-
-class EstatePropertyTag(models.Model):
-    _name = "estate.property.tag"
-    _description = "Real Estate Property Tag"
-
-    name = fields.Char(required=True)
-
-class EstatePropertyOffer(models.Model):
-    _name = "estate.property.offer"
-    _description = "Real Estate Property Offer"
-
-    price = fields.Float()
-    status = fields.Selection(
-        selection=[
-            ('accepted', 'Accepted'),
-            ('refused', 'Refused'),
-        ],
-        copy=False
-    )
-    partner_id = fields.Many2one('res.partner', required=True, string="Partner")
-    property_id = fields.Many2one('estate.property', required=True)
-    validity = fields.Integer(default=7, string="Validity (days)")
-    date_deadline = fields.Date(compute='_compute_date_deadline', inverse='_inverse_date_deadline', string="Deadline")
-
-    @api.depends('validity')
-    def _compute_date_deadline(self):
-        """
-        Compute the date deadline based on the validity field.
-        """
-        for record in self:
-            start_date = record.create_date if record.create_date else fields.Date.today()
-            record.date_deadline = fields.Date.add(start_date, days=record.validity)
-
-    def _inverse_date_deadline(self):
-        """
-        Calculate the validity of each record based on the date deadline.
-        """
-        for offer in self:
-            start_date = offer.create_date.date() if offer.create_date else fields.Date.today()
-            offer.validity = (offer.date_deadline - start_date).days
+        return True
