@@ -10,8 +10,9 @@ class EstatePropertyModel(models.Model):
         ('check_expected_price', 'CHECK(expected_price > 0)', 'The expected price must be strictly positive'),
         ('check_selling_price', 'CHECK(selling_price >= 0)', 'The selling price must be positive'),
     ]
+    _order = "id desc"
     
-    name = fields.Char(required=True)
+    name = fields.Char(string="Title", required=True)
     description = fields.Char()
     postcode = fields.Char()
     date_availability = fields.Date(string="Available From", copy=False, default=fields.Date.add(fields.Date.today(), months=3))
@@ -46,7 +47,7 @@ class EstatePropertyModel(models.Model):
         default='new',
         readonly=True
     )
-    property_type_id = fields.Many2one('estate.property.type')
+    property_type_id = fields.Many2one('estate.property.type', )
     buyer = fields.Many2one('res.partner', copy=False)
     salesperson = fields.Many2one('res.users', string="Salesman", default=lambda self: self.env.user)
     tag_ids = fields.Many2many('estate.property.tag')
@@ -93,6 +94,7 @@ class EstatePropertyModel(models.Model):
         for record in self:
             if record.state == 'sold':
                 raise exceptions.UserError("Sold properties cannot be canceled")
+            else:
                 record.state = 'canceled'
         return True
 
@@ -100,5 +102,6 @@ class EstatePropertyModel(models.Model):
         for record in self:
             if record.state == 'canceled':
                 raise exceptions.UserError("Canceled properties cannot be sold")
+            else: 
                 record.state = 'sold'
         return True
