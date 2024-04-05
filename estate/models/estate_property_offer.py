@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from dateutil.relativedelta import relativedelta
 
 from odoo import api, exceptions, fields, models
 
@@ -30,8 +31,8 @@ class EstatePropertyOffer(models.Model):
         Compute the date deadline based on the validity field.
         """
         for record in self:
-            start_date = record.create_date if record.create_date else fields.Date.today()
-            record.date_deadline = fields.Date.add(start_date, days=record.validity)
+            start_date = record.create_date.date() if record.create_date else fields.Date.today()
+            record.date_deadline = start_date + relativedelta(days=record.validity)
 
     def _inverse_date_deadline(self):
         """
@@ -63,3 +64,16 @@ class EstatePropertyOffer(models.Model):
             else:
                 offer.status = 'refused'
         return True
+
+    @api.model
+    def create(self, vals):
+        property_id = vals.get('property_id')
+        if property_id:
+            property = self.env['estate.property'].browse(property_id)
+            offer_best_price = max(property.offer_ids.mapped('price'), default=0.0)
+            if vals.get('price', 0.0) < offer_best_price:
+                raise exceptions.UserError(
+                    "The price must be higher than the best offer (%.2f)" % offer_best_price)
+            property.state = 'offer_received'
+        return super(EstatePropertyOffer, self).create(vals)
+
