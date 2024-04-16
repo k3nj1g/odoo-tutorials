@@ -3,7 +3,7 @@
     <record id="estate_property_action" model="ir.actions.act_window">
         <field name="name">Properties</field>
         <field name="res_model">estate.property</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">kanban,tree,form</field>
         <field name="context">{'search_default_available': True}</field>
     </record>
 
@@ -25,7 +25,39 @@
                 <field name="state" column_invisible="True"/>
             </tree>
         </field>
-    </record>
+    </record>   
+
+    <record id="estate_property_view_kanban" model="ir.ui.view">
+        <field name="name">estate_property.kanban</field>
+        <field name="model">estate.property</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="property_type_id"  records_draggable="False">
+                <field name="state"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click">
+                            <strong class="o_kanban_record_title">
+                                <field name="name"/>
+                            </strong>
+                            <div>
+                                <span>Expected price: </span>
+                                <field name="expected_price"/>
+                            </div>
+                            <div t-if="record.state.raw_value == 'offer_received'">
+                                <span>Best price: </span>
+                                <field name="best_price"/>
+                            </div>
+                            <div t-if="record.state.raw_value == 'offer_accepted'">
+                                <span>Selling price: </span>
+                                <field name="selling_price"/>
+                            </div>
+                            <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>   
 
     <record id="estate_property_view_form" model="ir.ui.view">
         <field name="name">estate_property.form</field>
@@ -99,7 +131,7 @@
                 <field name="living_area" filter_domain="[('living_area', '>=', self)]" />
                 <field name="facades" string="Facades"/>
                 <field name="facades" string="Facades"/>
-                <filter string="Available" name="available" domain="[('date_availability', '&lt;=', context_today())]"/>
+                <filter string="Available" name="available" domain="[('date_availability', '&gt;=', context_today())]"/>
                 <group expand="1" string="Postcode">
                     <filter string="Postcode" name="postcode" context="{'group_by':'postcode'}"/>
                 </group>
